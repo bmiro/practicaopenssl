@@ -34,14 +34,30 @@
   \maketitle
 
   \begin{abstract}
-    Securització de un servidor web emprant OpenSSL.
+    \centering
+    Securització d'un servidor web emprant OpenSSL.
   \end{abstract}
 
   \newpage
 
 \section{Introducció}
+%Explicar importancia de les comunicacions, que siguin segures, etc
 
+%La seguretat en les comunicacions es un tema molt important i que moltes
+%vegades es deixa de banda. L'intercanvi de dades a la xarxa es molt important
+%que sigui xifrat i que es sapiga que realment s'envia la informació al lloc
+%correcte. Per aconseguir això tenim el protocol SSL (Secure Sockets Layer), que
+%ens permet comunicacions segures en una xarxa. 
 
+%El protocol SSL ens propociona autenticació i privacitat de la informació.
+%Habitualment nomes el servidor és autenticat, mentres que el client es mante
+%sense autenticar. %Com ho fa? Certificats. 
+
+%En aquest document veurem el procés a seguir per instalar un certificat SSL a
+%un servidor Apache del paquet XAMPP. Per això, començarem vegent com es
+%configura el paquet XAMPP i l'OpenSSL, com es genera la clau privada i el
+%certificat i on s'ha de situar. Per acabar, veurem com algunes vegades aquesta
+%seguretat es pot saltar i analitzarem el procés a seguir per fer-ho. 
 
 \section{Configuració XAMPP}
 XAMPP és un paquet de programari que conté un servidor web, Apache; una base 
@@ -217,7 +233,7 @@ Starting Unified sniffing...
 Text only Interface activated...
 Hit 'h' for inline help
 
-HTTP : 209.85.227.104:443 -> USER: practicaopenssl  PASS: \emph{h4x0r_pass}  
+HTTP : 209.85.227.104:443 -> USER: practicaopenssl  PASS: h4x0r_pass  
 INFO: https://www.google.com/accounts/ServiceLogin?service=mail&passive=true&rm=
 false&continue=https://mail.google.com/mail/?ui=html&zy=l&bsv=llya694le36z&
 \end{minted}
