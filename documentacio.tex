@@ -247,8 +247,8 @@ INFO: https://www.google.com/accounts/ServiceLogin?service=mail&passive=true&rm=
 false&continue=https://mail.google.com/mail/?ui=html&zy=l&bsv=llya694le36z&
 \end{minted}
 
-Com podem veure la víctima ha intentat loguejar al seu correu de Gmail. L'usuari és \emph{practicaopenssl}
-i la contrasenya \emph{h4x0r\_pass}. Això significa que ha rebut l'advertiment de que el certificat no
+Com podem veure la víctima ha intentat loguejar al seu correu de Gmail. L'usuari és \texttt{practicaopenssl}
+i la contrasenya \texttt{h4x0r\_pass}. Això significa que ha rebut l'advertiment de que el certificat no
 era l'autèntic de la pàgina i segurament per resignació, desconeixement i ganes d'entrar al seu
 correu ha ignorat l'advertiment acceptant el nou certificat fraudulent.
 Aquest procediment funciona per totes les webs amb \emph{SSL} que s'han provat, entre elles el Facebook, Lastfm...
@@ -259,6 +259,10 @@ En resum, emprar \emph{https} no és garantia de res sinó es sap amb seguretat 
 Per tal d'evitar aquest frau sempre ens hem d'assegurar que els certificats són els correctes,
 sobretot en el primer intercanvi que ha de ser en persona ja que si es un intercanvi a través de
 la xarxa ens trobam amb el mateix problema.
+
+Per altra banda també ens podem trobar amb que el navegador de serie porti ja uns certificats oficials
+i que per tant aquí la tasca seria assegurar-se que s'ha insta\lgem at una versió no fraudulenta del
+navegador. Aquesta seria l'opció més còmode i transparent per l'usuari.
 
 %http://www.youtube.com/watch?v=ESGV9zlo0Zo
 
