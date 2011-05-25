@@ -34,8 +34,8 @@
   \maketitle
 
   \begin{abstract}
-    \centering
-    Securització d'un servidor web emprant OpenSSL.
+    Securització d'un servidor web \emph{Apache} emprant \emph{OpenSSL} i
+atac \emph{man in the middle} amb suplantació de certificat emprant \emph{ettercap}.
   \end{abstract}
 
   \newpage
@@ -43,26 +43,26 @@
 \section{Introducció}
 %Explicar importancia de les comunicacions, que siguin segures, etc
 
-%La seguretat en les comunicacions es un tema molt important i que moltes
-%vegades es deixa de banda. L'intercanvi de dades a la xarxa es molt important
-%que sigui xifrat i que es sapiga que realment s'envia la informació al lloc
-%correcte. Per aconseguir això tenim el protocol SSL (Secure Sockets Layer), que
-%ens permet comunicacions segures en una xarxa. 
+La seguretat en les comunicacions és un tema molt important i que moltes
+vegades es deixa de banda. L'intercanvi de dades a la xarxa s'hauria de fer xifrada
+ i que es sàpiga que realment s'envia la informació al lloc
+correcte. Per aconseguir això tenim el protocol \emph{SSL (Secure Sockets Layer)}, que
+ens permet comunicacions segures en una xarxa. 
 
 %El protocol SSL ens propociona autenticació i privacitat de la informació.
 %Habitualment nomes el servidor és autenticat, mentres que el client es mante
 %sense autenticar. %Com ho fa? Certificats. 
 
-%En aquest document veurem el procés a seguir per instalar un certificat SSL a
-%un servidor Apache del paquet XAMPP. Per això, començarem vegent com es
-%configura el paquet XAMPP i l'OpenSSL, com es genera la clau privada i el
-%certificat i on s'ha de situar. Per acabar, veurem com algunes vegades aquesta
-%seguretat es pot saltar i analitzarem el procés a seguir per fer-ho. 
+En aquest document veurem el procés a seguir per insta\lgem ar un certificat \emph{SSL} a
+un servidor \emph{Apache} del paquet \emph{XAMPP}. Per això, començarem veient com es
+configura el paquet \emph{XAMPP} i l'\emph{OpenSSL}, com es genera la clau privada, el
+certificat i on s'ha de situar. Per acabar, veurem com algunes vegades aquesta
+seguretat es pot saltar i analitzarem el procés a seguir per fer-ho. 
 
 \section{Configuració XAMPP}
-XAMPP és un paquet de programari que conté un servidor web, Apache; una base 
-de dades, MySQL i dos llenguatges per interaccionar amb ells, Perl i PHP. El
-fet de emprar el XAMPP és perqué és un paquet preparat per l'ús immediat i
+\emph{XAMPP} és un paquet de programari que conté un servidor web, \emph{Apache}; una base 
+de dades, \emph{MySQL} i dos llenguatges per interaccionar amb ells, \emph{Perl} i \emph{PHP}. El
+fet de emprar el \emph{XAMPP} és perquè és un paquet preparat per l'ús immediat i
 requereix poca configuració.
 
 En un entorn GNU/Linux senzillament s'ha de baixar el paquet i descomprimir-lo
@@ -85,18 +85,18 @@ web a \href{http://localhost}{localhost} per comprovar si funciona.
 \section{Configuració OpenSSL}
 Per la insta\lgem ació del OpenSSL pot fer-se baixant el paquet a la seva
 web\footnote{\url{http://openssl.org}} o directament amb el paquet pre-compilat
-de la distribució emprada. En en aquest cas la distribució emprada es Debian 
+de la distribució emprada. En en aquest cas la distribució emprada és Debian 
 GNU/Linux, així doncs el paquet a insta\lgem ar és el \texttt{openssl}
 
 \begin{minted}[frame=lines, fontsize=\footnotesize]{text}
 aptitude install openssl
 \end{minted}
 
-Cal esmentar que aquest paquet és sols per generar els certificats, l'Apache del XAMPP
-porta suport per OpenSSL per atendre les peticions i emprar les claus generades.
+Cal esmentar que aquest paquet és sols per generar els certificats, l'\emph{Apache} del
+\emph{XAMPP} porta suport per \emph{OpenSSL} per atendre les peticions i emprar les claus generades.
 
 Les claus mencionades és generen de la següent manera.
-En primer lloc generam la clau RSA, ens declaram autàrquics i no emprarem cap entitat
+En primer lloc generam la clau \emph{RSA}, ens declaram autàrquics i no emprarem cap entitat
 oficial que la signi.
 
 \begin{minted}[frame=lines, fontsize=\footnotesize]{text}
@@ -112,13 +112,13 @@ openssl gendsa -des3 -out meuCA.key mevaRSA.key
 Aquest pas ens requereix una contrasenya, nosaltres establim \texttt{practicaseguretat}.
 
 Finalment empram la clau per generar el certificat, amb una caducitat d'un any i emprant
-x509.
+\emph{x509}.
 
 \begin{minted}[frame=lines, fontsize=\footnotesize]{text}
 openssl req -new -x509 -days 365 -key meuCA.key -out nou.crt
 \end{minted}
 
-Un cop hem acabat posam aquests fitxers a la carpeta del XAMPP.
+Un cop hem acabat posam aquests fitxers a la carpeta del \emph{XAMPP}.
 
 \begin{minted}[frame=lines, fontsize=\footnotesize]{text}
 cp mevaRSA.key /opt/lampp/etc/ssl.key
@@ -128,24 +128,33 @@ cp nou.crt /opt/lampp/etc/ssl.crt
 Un cop fet això ja podem obrir el navegador emprant \emph{https} a \href{https://localhost}{localhost}
 i acceptar el certificat, assegurant-mos que sigui el correcte.
 
-Ja tenim securitzat en nostre servidor amb OpenSSL, ara nomes fa falta distribuir
+Si volem que el \emph{XAMPP} sols permeti connexions xifrades podem fer-ho executant-lo
+amb el paràmetre \texttt{startssl} en lloc de \texttt{start}.
+
+\begin{minted}[frame=lines, fontsize=\footnotesize]{text}
+/opt/lampp/lampp startssl
+\end{minted}
+
+Ja tenim securitzat en nostre servidor amb \emph{OpenSSL}, ara només fa falta distribuir
 els certificats als usuaris perquè els posin al seu navegador i empraran connexions segures.
+L'ideal es entregar en mà aquests certificats per evitar que el primer intercanvi siguin
+fraudulent i siguem víctimes de l'atac explicat a continuació
 
 \section{HackLab}
-En aquest apartat s'explica com saltar-se la seguretat OpenSSL prenent un parell de suposicions:
+En aquest apartat s'explica com saltar-se la seguretat \emph{OpenSSL} prenent un parell de suposicions:
 
 \begin{itemize}
   \item La víctima i l'atacant estan a la mateixa subxarxa.
-  \item La víctima ha d'acceptar un nou certifica SSL fals del qual l'adverteix el navegador.
+  \item La víctima ha d'acceptar un nou certificat \emph{SSL} fals del qual l'adverteix el navegador.
 \end{itemize}
 
 La primera suposició és senzilla, simplement implica que ambdós clients estiguin connectats
 a la mateixa xarxa, fins i tot es factible amb xarxes sense fils o \emph{switch} sempre
-i quan es faci un enverinament ARP per fer creure que l'atacant és el punt d'accés
-i rebi els missatges.
+i quan es faci un enverinament \emph{ARP} per fer creure que l'atacant és el punt d'accés
+i rebi els missatges per tal de manipular-los.
 
 A continuació ens hem d'assegurar que el \texttt{ettercap} està configurat adequadament,
-concretament hem de observar que el fitxer \texttt{/etc/etter.conf} hi hagi els següents paràmetres;
+concretament hem d'observar que el fitxer \texttt{/etc/etter.conf} hi hagi els següents paràmetres;
 
 \begin{minted}[frame=lines, fontsize=\footnotesize]{text}
 [privs]
@@ -162,9 +171,9 @@ redir_command_off = "iptables -t nat -D PREROUTING -i %iface -p tcp --dport
 %port -j REDIRECT --to-port %rport"
 \end{minted}
 
-Ara hem de conèixer en quin escenari ens trobam, primer de tot identificar la nostra adreça IP
-i targeta de xarxa. La targeta de xarxa si es cablejada segurament serà \texttt{eth0},
-així doncs amb un \texttt{ifconfig eth0} hauríem de veure la nostra adreça IP al camp
+Ara hem de conèixer en quin escenari ens trobam, primer de tot identificar la nostra adreça \emph{IP}
+i targeta de xarxa. La targeta de xarxa si és cablejada segurament serà \texttt{eth0},
+així doncs amb un \texttt{ifconfig eth0} hauríem de veure la nostra adreça \emph{IP} al camp
 \texttt{inet addr}.
 
 Un cop fet això cercam les víctimes, una manera de fer-ho és emprant el programa \texttt{nmap},
@@ -242,10 +251,14 @@ Com podem veure la víctima ha intentat loguejar al seu correu de Gmail. L'usuar
 i la contrasenya \emph{h4x0r\_pass}. Això significa que ha rebut l'advertiment de que el certificat no
 era l'autèntic de la pàgina i segurament per resignació, desconeixement i ganes d'entrar al seu
 correu ha ignorat l'advertiment acceptant el nou certificat fraudulent.
-Aquest procediment funciona per totes les webs amb SSL que s'han provat, entre elles el Facebook, Lastfm...
+Aquest procediment funciona per totes les webs amb \emph{SSL} que s'han provat, entre elles el Facebook, Lastfm...
 
 En resum, emprar \emph{https} no és garantia de res sinó es sap amb seguretat que el certificat emprat
-es el correcte.
+és el correcte.
+
+Per tal d'evitar aquest frau sempre ens hem d'assegurar que els certificats són els correctes,
+sobretot en el primer intercanvi que ha de ser en persona ja que si es un intercanvi a través de
+la xarxa ens trobam amb el mateix problema.
 
 %http://www.youtube.com/watch?v=ESGV9zlo0Zo
 
